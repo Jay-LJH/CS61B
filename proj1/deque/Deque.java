@@ -2,7 +2,7 @@ package deque;
 
 import java.util.Iterator;
 
-interface Deque<T> {
+public interface Deque<T> {
      void addFirst(T item);
      void addLast(T item);
      int size();
