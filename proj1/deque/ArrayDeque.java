@@ -58,7 +58,7 @@ public class ArrayDeque<T> implements Deque<T> {
                 end = size + start;
                 length = array.length;
             }
-            return res;
+            return (T) res;
         }
         return null;
     }
@@ -76,13 +76,9 @@ public class ArrayDeque<T> implements Deque<T> {
                 end = size + start;
                 length = array.length;
             }
-            return res;
+            return (T) res;
         }
         return null;
-    }
-    @Override
-    public boolean isEmpty() {
-        return size == 0;
     }
     @Override
     public int size() {

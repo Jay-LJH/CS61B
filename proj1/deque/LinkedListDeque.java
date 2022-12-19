@@ -1,6 +1,6 @@
 package deque;
 
-public class LinkedListDeque<T> implements Deque<T>{
+public class LinkedListDeque<T> implements Deque<T> {
     public LinkedListDeque() {
         start = end = null;
         size = 0;
@@ -10,6 +10,7 @@ public class LinkedListDeque<T> implements Deque<T>{
         start = end = new Node<>(i, null, null);
         size = 1;
     }
+
     @Override
     public void addFirst(T i) {
         if (size == 0) {
@@ -21,6 +22,7 @@ public class LinkedListDeque<T> implements Deque<T>{
         start = start.before;
         size += 1;
     }
+
     @Override
     public void addLast(T i) {
         if (size == 0) {
@@ -32,14 +34,13 @@ public class LinkedListDeque<T> implements Deque<T>{
         end = end.next;
         size += 1;
     }
-    @Override
-    public boolean isEmpty() {
-        return size == 0;
-    }
+
+
     @Override
     public int size() {
         return size;
     }
+
     @Override
     public void printDeque() {
         if (size > 0) {
@@ -52,35 +53,37 @@ public class LinkedListDeque<T> implements Deque<T>{
         }
         System.out.print("\n");
     }
+
     @Override
     public T removeFirst() {
         if (size > 1) {
             T i = start.item;
             start = start.next;
             size -= 1;
-            return i;
+            return (T) i;
         }
         if (size == 1) {
             T i = start.item;
             start = end = null;
             size -= 1;
-            return i;
+            return (T) i;
         }
         return null;
     }
+
     @Override
     public T removeLast() {
         if (size > 1) {
             T i = end.item;
             end = end.before;
             size -= 1;
-            return i;
+            return (T) i;
         }
         if (size == 1) {
             T i = start.item;
             start = end = null;
             size -= 1;
-            return i;
+            return (T) i;
         }
         return null;
     }
@@ -129,6 +132,7 @@ public class LinkedListDeque<T> implements Deque<T>{
         private Node<T> p;
         private int index;
     }
+
     @Override
     public T get(int index) {
         Iterator<T> iterator = this.iterator();
@@ -170,9 +174,9 @@ public class LinkedListDeque<T> implements Deque<T>{
             before = b;
         }
 
-        public Node<T> next;
-        public Node before;
-        public T item;
+        private Node<T> next;
+        private Node before;
+        private T item;
     }
 
     private Node<T> start;
