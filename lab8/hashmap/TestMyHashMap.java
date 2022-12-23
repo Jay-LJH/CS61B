@@ -29,10 +29,11 @@ public class TestMyHashMap {
 
     public static void sanityClearTest(MyHashMap<String, Integer> b) {
         for (int i = 0; i < 455; i++) {
-            b.put("hi" + i, 1);
+            String t="hi"+i;
+            b.put(t, i);
             //make sure put is working via containsKey and get
-            assertTrue(null != b.get("hi" + i)
-                    && b.containsKey("hi" + i));
+            assertTrue(null != b.get(t)
+                    && b.containsKey(t)&&b.get(t)==i);
         }
         b.clear();
         assertEquals(0, b.size());
