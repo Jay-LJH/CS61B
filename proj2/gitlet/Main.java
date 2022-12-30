@@ -71,8 +71,16 @@ public class Main {
                     message("Not in an initialized Gitlet directory.");
                 }
                 if (args.length == 3) {
+                    if(!args[1].equals("--")){
+                        message("Incorrect operands.");
+                        System.exit(0);
+                    }
                     Repository.checkoutfile(args[2]);
                 } else if(args.length == 4) {
+                    if(!args[2].equals("--")){
+                        message("Incorrect operands.");
+                        System.exit(0);
+                    }
                     Repository.checkoutfile(args[1], args[3]);
                 }
                 else if (args.length == 2) {
@@ -90,8 +98,8 @@ public class Main {
                 Repository.reset(args[1]);
                 break;
             case "merge":
-                validateNumArgs("merge", args, 3);
-                Repository.merge(args[1],args[2]);
+                validateNumArgs("merge", args, 2);
+                Repository.merge(args[1]);
                 break;
             default:
                 message("No command with that name exists.");

@@ -1,7 +1,6 @@
 package gitlet;
 
 import java.io.File;
-import java.nio.ByteBuffer;
 import java.sql.Date;
 import java.util.*;
 
@@ -129,10 +128,19 @@ public class Repository {
             byte[] bytes = readContents(f);
             writeContents(dst, bytes);
         }
-        //delete all in temp
+        //delete all in temp and files tracked in head
         for (File file : TEMP_DIR.listFiles()) {
             file.delete();
         }
+        for(File file:join(OBJ_DIR,head.id).listFiles()){
+            String fileName=file.getName();
+            File cwd=join(CWD,fileName);
+            File given=join(OBJ_DIR,b.id,fileName);
+            if(cwd.exists() && !given.exists()){
+                cwd.delete();
+            }
+        }
+
         //change head
         head.head = false;
         writeObject(join(BRRANCH_DIR, head.name), head);
@@ -249,7 +257,7 @@ public class Repository {
         System.exit(0);
     }
 
-    public static void merge(String name, String msg) {
+    public static void merge(String name) {
         if (!join(BRRANCH_DIR, name).exists()) {
             message("A branch with that name does not exist.");
             System.exit(0);
@@ -327,11 +335,17 @@ public class Repository {
             // all situation have checked before
             if (!givenPath.exists()) {
                 if (splitPath.exists()) {
-                    //case 6:if file is the same in split point and head
-                    //and not exist in given branch,just remove it
                     if (!fileaddress(splitPath).equals(fileaddress(file))) {
                         //case 8
                         tracks.add(filemerge(file, null));
+                    }
+                    else{
+                        //case 6:if file is the same in split point and head
+                        //and not exist in given branch,just remove it
+                        File cwd=join(CWD,fileName);
+                        if(cwd.exists()){
+                            cwd.delete();
+                        }
                     }
                 } else {
                     //case 4
@@ -339,6 +353,15 @@ public class Repository {
                 }
             }
         }
+        //checkout all the file to cwd
+        for(File f:tracks){
+            String fileName=f.getName();
+            File file=join(CWD,fileName);
+            byte[] bytes=readContents(f);
+            writeContents(file,bytes);
+        }
+        // create merge commit
+        String msg="Merged "+given.name+" into "+head.name+".";
         Commit c = new Commit(new java.util.Date(), msg, given.id, tracks);
         //redirect given branch
         given.id = findHead().id;
@@ -381,10 +404,6 @@ public class Repository {
                     || (cwd.exists() && !headfile.exists() && !fileaddress(f).equals(fileaddress(cwd)))
             ) {
                 message("There is an untracked file in the way; delete it, or add and commit it first.");
-                message(String.valueOf(cwd.exists()));
-                message(String.valueOf(fileaddress(cwd).equals(fileaddress(f))));
-                message(f.getPath());
-                message(cwd.getPath());
                 System.exit(0);
             }
         }
