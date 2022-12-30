@@ -86,6 +86,15 @@ public class Repository {
     }
 
     public static void checkoutfile(String id, String name) {
+        if(id.length()<30){
+            for(File f:OBJ_DIR.listFiles()){
+                String dirname=f.getName();
+                if(dirname.substring(0,id.length()).equals(id)) {
+                    id = dirname;
+                    break;
+                }
+            }
+        }
         if (!join(OBJ_DIR, id).exists()) {
             message("No commit with that id exists.");
             System.exit(0);
@@ -269,12 +278,13 @@ public class Repository {
         Branch head = findHead();
         Branch given = readObject(join(BRRANCH_DIR, name), Branch.class);
         checkforcover(given);
-        if (head.equals(given)) {
+        if (head.name.equals(given.name)) {
             message("Cannot merge a branch with itself.");
             System.exit(0);
         }
         String split_id = find_split(head, given);
         if (split_id.equals(given.id)) {
+            message("Given branch is an ancestor of the current branch.");
             return;
         } else if (split_id.equals(head.id)) {
             checkoutBranch(name);
@@ -388,6 +398,7 @@ public class Repository {
         else
             file = join(TEMP_DIR, b.getName());
         writeContents(file, s1.getBytes(), filea, s2.getBytes(), fileb, s3.getBytes());
+       message("Encountered a merge conflict.");
         return file;
     }
 
@@ -427,10 +438,11 @@ public class Repository {
 
     private static List<String> commitlist(Branch branch) {
         String id = branch.id;
+        Commit c;
         List<String> list = new ArrayList<>();
         while (!Objects.equals(id, "0")) {
             list.add(id);
-            Commit c = getCommitById(id);
+            c = getCommitById(id);
             id = c.getParents().get(0);
         }
         Collections.reverse(list);

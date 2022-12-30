@@ -101,7 +101,7 @@ public class Commit implements Serializable {
         s += "commit " + id + "\n";
         if (parents.size() > 1) {
             Iterator<String> i = parents.iterator();
-            s += "Merge: " + i.next().substring(0, 6) + " " + i.next().substring(0, 6) + "\n";
+            s += "Merge: " + i.next().substring(0, 7) + " " + i.next().substring(0, 7) + "\n";
         }
         s += "Date: " + stringDate + "\n";
         s += message + "\n";
