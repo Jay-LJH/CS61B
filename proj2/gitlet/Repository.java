@@ -215,14 +215,8 @@ public class Repository {
         }
         message("\n=== Staged Files ===");
         File[] files = join(OBJ_DIR, findHead().id).listFiles();
-        for (File f : files) {
-            String name = f.getName();
-            if (name.equals("info")) {
-                continue;
-            }
-            if (join(CWD, name).exists()) {
-                message(name);
-            }
+        for(File f: TEMP_DIR.listFiles()){
+            message(f.getName());
         }
         message("\n=== Removed Files ===");
         for (File f : files) {

@@ -61,6 +61,7 @@ public class Main {
             case "rm":
                 validateNumArgs("rm", args, 2);
                 Repository.rm(args[1]);
+                break;
             case "branch":
                 validateNumArgs("branch", args, 2);
                 Branch.createBranch(args[1], Repository.findHead().id);
