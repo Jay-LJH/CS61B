@@ -28,120 +28,69 @@ public class Commit implements Serializable {
      * variable is used. We've provided one example for `message`.
      */
     public Commit(Date date, String message) {
-        this.date = date;
-        this.message = message;
-        this.parents = new ArrayList<>();
-        b = findHead();
-        parents.add(b.id);
-        tracks = new ArrayList<>();
-        File[] fs = TEMP_DIR.listFiles();
-        for (File f : fs) {
-            tracks.add(readContents(f));
+
+        List<File> files = new ArrayList<>();
+        files.addAll(Arrays.asList(TEMP_DIR.listFiles()));
+        Boolean flag = files.size() == 0;
+        Branch head = findHead();
+        if (head.id.equals("0"))
+            init(date, message, null, files);
+        else {
+            File[] tracks = join(OBJ_DIR, head.id).listFiles();
+            for (File f : tracks) {
+                if (f.getName().equals("info"))
+                    continue;
+                String name = f.getName();
+                File cwd = join(CWD, name);
+                if (!cwd.exists()) {
+                    flag = false;
+                } else if (Repository.fileaddress(cwd).equals(Repository.fileaddress(f))) {
+                    files.add(f);
+                } else {
+                    files.add(cwd);
+                    flag = false;
+                }
+            }
+            if (flag) {
+                message("No changes added to the commit.");
+                System.exit(0);
+            }
+            init(date, message, null, files);
         }
-        id = generateId();
     }
 
     public Commit(Date date, String message, String id, List<File> files) {
+        init(date, message, id, files);
+    }
+
+    public void init(Date date, String message, String id, List<File> files) {
         this.date = date;
         this.message = message;
         this.parents = new ArrayList<>();
-        b = findHead();
-        parents.add(b.id);
-        parents.add(id);
+        Branch head = findHead();
+        parents.add(head.id);
+        if (id != null)
+            parents.add(id);
+        List<byte[]> tracks = new ArrayList<>();
         for (File f : files) {
             tracks.add(readContents(f));
         }
-        this.id = generateId();
 
-        File f = join(OBJ_DIR, this.id);
-        f.mkdir();
-        for (File t : files) {
-            byte[] b = readContents(t);
-            File dstname = join(f, t.getName());
-            writeContents(dstname, b);
+        this.id = sha1(date.toString(), parents.toString(), message, tracks.toString());
+        join(OBJ_DIR, this.id).mkdir();
+        for (File f : files) {
+            String name = f.getName();
+            File dst = join(OBJ_DIR, this.id, name);
+            byte[] bytes = readContents(f);
+            writeContents(dst, bytes);
         }
-        for (File file : TEMP_DIR.listFiles()) {
-            file.delete();
+        File dstinfo = join(OBJ_DIR, this.id, "info");
+        writeObject(dstinfo, this);
+        for (File f : join(TEMP_DIR).listFiles()) {
+            f.delete();
         }
-        //create info file about commit message
-        File fi = join(f, "info");
-        try {
-            fi.createNewFile();
-            writeObject(fi, this);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        //change head
-        b.id = id;
-        File branchfile = join(BRRANCH_DIR, b.name);
-        branchfile.delete();
-        writeObject(branchfile, b);
-    }
-
-    private String generateId() {
-        if (Objects.equals(b.id, "0"))
-            return sha1(date.toString(), parents.toString(), message);
-        return sha1(date.toString(), parents.toString(), message, tracks.toString());
-    }
-
-    public void save() {
-        boolean flag = true;
-        if (!b.id.equals("0")) {
-            for (File file : join(OBJ_DIR, parents.get(0)).listFiles()) {
-                String name = file.getName();
-                File f = join(CWD, name);
-                if (!f.exists() || !Repository.fileaddress(file).equals(Repository.fileaddress(f)))
-                    flag = false;
-            }
-        }
-        if (TEMP_DIR.listFiles().length == 0 && !Objects.equals(b.id, "0") && flag) {
-            message("No changes added to the commit.");
-            System.exit(0);
-        }
-        //copy all files from temp to dst
-        File f = join(OBJ_DIR, id);
-        f.mkdir();
-        File[] fs = TEMP_DIR.listFiles();
-        for (File t : fs) {
-            byte[] b = readContents(t);
-            File dstname = join(f, t.getName());
-            writeContents(dstname, b);
-            t.delete();
-        }
-        //create info file about commit message
-        File fi = join(f, "info");
-        try {
-            fi.createNewFile();
-            writeObject(fi, this);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        //copy files from head
-        if (!Objects.equals(parents.get(0), "0")) {
-            fs = join(OBJ_DIR, parents.get(0)).listFiles();
-            for (File t : fs) {
-                String name = t.getName();
-                if (join(f, name).exists()) {
-                    continue;
-                }
-                File cwd = join(CWD, t.getName());
-                if (cwd.exists() && Repository.fileaddress(cwd).equals(Repository.fileaddress(t))) {
-                    byte[] b = readContents(t);
-                    File dstname = join(f, t.getName());
-                    writeContents(dstname, b);
-                } else if (cwd.exists()) {
-                    byte[] b = readContents(cwd);
-                    File dstname = join(f, t.getName());
-                    writeContents(dstname, b);
-                }
-
-            }
-        }
-        //change head
-        b.id = id;
-        File branchfile = join(BRRANCH_DIR, b.name);
-        branchfile.delete();
-        writeObject(branchfile, b);
+        head.id = this.id;
+        writeObject(join(BRRANCH_DIR, head.name), head);
     }
 
     @Override
@@ -171,10 +120,6 @@ public class Commit implements Serializable {
         return id;
     }
 
-    public static void main(String[] args) {
-        System.out.println(findHead().id);
-    }
-
     /**
      * The message of this Commit.
      */
@@ -182,8 +127,6 @@ public class Commit implements Serializable {
     private Date date;
     private String id;
     private List<String> parents;
-    private Branch b;
-    private List<Object> tracks;
     public static final File CWD = new File(System.getProperty("user.dir"));
     public static final File GITLET_DIR = join(CWD, ".gitlet");
     public static final File REF_DIR = join(GITLET_DIR, "refs");

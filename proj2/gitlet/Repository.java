@@ -36,7 +36,6 @@ public class Repository {
         TEMP_DIR.mkdir();
         Branch.createBranch("master", "0");
         Commit initcommit = new Commit(new Date(0), "initial commit");
-        initcommit.save();
     }
 
     public static Branch findHead() {
@@ -56,6 +55,11 @@ public class Repository {
         if (!filename.exists()) {
             message("File does not exist.");
             System.exit(0);
+        }
+        Branch head = findHead();
+        File f = join(OBJ_DIR, head.id, name);
+        if (f.exists() && fileaddress(f).equals(fileaddress(filename))) {
+            return;
         }
         File dstname = join(TEMP_DIR, name);
         byte[] b = readContents(filename);
@@ -206,7 +210,7 @@ public class Repository {
             if (branch.head) {
                 System.out.println("*" + branch.name);
             } else {
-                System.out.println(branch);
+                System.out.println(branch.name);
             }
         }
         message("\n=== Staged Files ===");
@@ -251,12 +255,7 @@ public class Repository {
         System.exit(0);
     }
 
-    public static void commit(Date d, String message) {
-        Commit commit = new Commit(d, message);
-        commit.save();
-    }
-
-    public static void merge(String name,String msg) {
+    public static void merge(String name, String msg) {
         if (!join(BRRANCH_DIR, name).exists()) {
             message("A branch with that name does not exist.");
             System.exit(0);
@@ -294,8 +293,8 @@ public class Repository {
                 String givenid = fileaddress(file);
                 String splitid = fileaddress(splitPath);
                 String headid = fileaddress(headPath);
-                if (!givenid.equals(splitid) && givenid.equals(headid)) {
-                    //case 3
+                if (givenid.equals(splitid) && givenid.equals(headid)) {
+                    //both files are the same ,add it
                     tracks.add(file);
                 } else if (givenid.equals(splitid) && !headid.equals(splitid)) {
                     //case 2
@@ -307,71 +306,71 @@ public class Repository {
                     //case 8
                     tracks.add(filemerge(headPath, file));
                 }
-            }
-            else if(splitPath.exists()){
-                if(!fileaddress(splitPath).equals(fileaddress(file))){
-                    //case 8
-                    tracks.add(filemerge(null,file));
+            } else if (splitPath.exists()) {
+                if (!fileaddress(splitPath).equals(fileaddress(file))) {
+                    //case 8 only exist in split point,but not in head branch,not the same
+                    tracks.add(filemerge(null, file));
                 }
                 //else belong to case 7,just remove this file
-            }
-            else if(headPath.exists()){
-                if(fileaddress(headPath).equals(fileaddress(file))){
+            } else if (headPath.exists()) {
+                if (fileaddress(headPath).equals(fileaddress(file))) {
                     //case 3
                     tracks.add(file);
-                }
-                else{
+                } else {
                     //case 8
                     tracks.add(filemerge(headPath, file));
                 }
-            }
-            else{
+            } else {
                 //case 5
                 tracks.add(file);
             }
         }
-        for(File file:headfiles){
-            String fileName=file.getName();
+        for (File file : headfiles) {
+            String fileName = file.getName();
             File splitPath = join(OBJ_DIR, split_id, fileName);
-            File givenPath = join(OBJ_DIR, head.id, fileName);
+            File givenPath = join(OBJ_DIR, given.id, fileName);
             //if given exist the file with same name,
             // all situation have checked before
-            if(!givenPath.exists()){
-                if(splitPath.exists()){
+            if (!givenPath.exists()) {
+                if (splitPath.exists()) {
                     //case 6:if file is the same in split point and head
                     //and not exist in given branch,just remove it
-                    if(!fileaddress(splitPath).equals(fileaddress(file))){
+                    if (!fileaddress(splitPath).equals(fileaddress(file))) {
                         //case 8
-                        tracks.add(filemerge(file,null));
+                        tracks.add(filemerge(file, null));
                     }
-                }
-                else{
+                } else {
                     //case 4
                     tracks.add(file);
                 }
             }
         }
-        Commit c=new Commit(new java.util.Date(),msg, given.id, tracks);
+        Commit c = new Commit(new java.util.Date(), msg, given.id, tracks);
+        //redirect given branch
+        given.id = findHead().id;
+        File givenbranch = join(BRRANCH_DIR, given.name);
+        givenbranch.delete();
+        writeObject(givenbranch, given);
     }
 
     //file a from head ,file b from given
     private static File filemerge(File a, File b) {
-        byte[] filea=new byte[0];
-        if(a!=null)
-           filea=readContents(a);
-        byte[] fileb=new byte[0];
-        if(b!=null)
-            fileb=readContents(b);
-        String s1="<<<<<<< HEAD\n";
-        String s2="=======\n";
-        String s3=">>>>>>>\n";
+        byte[] filea = new byte[0];
+        if (a != null)
+            filea = readContents(a);
+        byte[] fileb = new byte[0];
+        if (b != null)
+            fileb = readContents(b);
+        String s1 = "<<<<<<< HEAD\n";
+        String s2 = "=======\n";
+        String s3 = ">>>>>>>\n";
 
         File file;
-        if(a!=null)
-            file=join(TEMP_DIR,a.getName());
+        if (a != null)
+            file = join(TEMP_DIR, a.getName());
         else
-            file=join(TEMP_DIR,b.getName());
-        writeContents(file,s1.getBytes(),filea,s2.getBytes(),fileb,s3.getBytes());
+            file = join(TEMP_DIR, b.getName());
+        writeContents(file, s1.getBytes(), filea, s2.getBytes(), fileb, s3.getBytes());
         return file;
     }
 
@@ -379,16 +378,20 @@ public class Repository {
         Branch head = findHead();
         File[] files = join(OBJ_DIR, b.id).listFiles();
         for (File f : files) {
-            String filename = f.getName();
-            if (filename.equals("info")) {
+            String name = f.getName();
+            if (name.equals("info"))
                 continue;
-            }
-            File dst = join(CWD, filename);
-            if (dst.exists()) {
-                if (!tracked(dst.getName())) {
-                    message("There is an untracked file in the way; delete it, or add and commit it first.");
-                    System.exit(0);
-                }
+            File cwd = join(CWD, name);
+            File headfile = join(OBJ_DIR, head.id, name);
+            if ((cwd.exists() && headfile.exists() && !fileaddress(headfile).equals(fileaddress(cwd)) && !fileaddress(f).equals(fileaddress(cwd)))
+                    || (cwd.exists() && !headfile.exists() && !fileaddress(f).equals(fileaddress(cwd)))
+            ) {
+                message("There is an untracked file in the way; delete it, or add and commit it first.");
+                message(String.valueOf(cwd.exists()));
+                message(String.valueOf(fileaddress(cwd).equals(fileaddress(f))));
+                message(f.getPath());
+                message(cwd.getPath());
+                System.exit(0);
             }
         }
     }

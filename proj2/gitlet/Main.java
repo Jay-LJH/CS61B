@@ -29,17 +29,18 @@ public class Main {
                     message("Incorrect operands.");
                 }
                 Repository.init();
-                // TODO: handle the `init` command
                 break;
             case "add":
-                // TODO: handle the `add [filename]` command
                 validateNumArgs("add", args, 2);
                 Repository.add(args[1]);
                 break;
             case "commit":
                 validateNumArgs("commit", args, 2);
+                if(args[1].equals("")){
+                    message("Please enter a commit message.");
+                    System.exit(0);
+                }
                 Commit c = new Commit(new Date(), args[1]);
-                c.save();
                 break;
             case "log":
                 validateNumArgs("log", args, 1);
