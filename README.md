@@ -6,6 +6,6 @@
 </ol>
 ##Link
 <ol>
-<li>Course home:<https://sp21.datastructur.es/index.html></li>
-<li>autogrape<https://www.gradescope.com/courses/137626></li>
+<li>[Course home](https://sp21.datastructur.es/index.html)</li>
+<li>[autogrape] (https://www.gradescope.com/courses/137626)</li>
 </ol>
