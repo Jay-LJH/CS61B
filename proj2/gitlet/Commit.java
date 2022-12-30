@@ -95,7 +95,7 @@ public class Commit implements Serializable {
 
     @Override
     public String toString() {
-        SimpleDateFormat DateFor = new SimpleDateFormat("E MMM dd HH:mm:ss yyyy z");
+        SimpleDateFormat DateFor = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy Z", Locale.ENGLISH);
         String stringDate = DateFor.format(date);
         String s = "===\n";
         s += "commit " + id + "\n";
