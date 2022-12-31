@@ -34,12 +34,12 @@ public class RandomWorldDemo {
      *  a wall, 33% chance of being a flower, and 33%
      *  chance of being empty space.
      */
-    private static TETile randomTile() {
+    public static TETile randomTile() {
         int tileNum = RANDOM.nextInt(3);
         switch (tileNum) {
             case 0: return Tileset.WALL;
             case 1: return Tileset.FLOWER;
-            case 2: return Tileset.NOTHING;
+            case 2: return Tileset.WATER;
             default: return Tileset.NOTHING;
         }
     }
