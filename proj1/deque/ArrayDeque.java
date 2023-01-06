@@ -101,7 +101,9 @@ public class ArrayDeque<T> implements Deque<T> {
         arraycopy(array, start, temp, 0, size);
         return Arrays.stream(temp).iterator();
     }
-
+    public interface Iterable<T>{
+        Iterator<T> iterator();
+    }
     public boolean equals(Object o) {
         if (o instanceof ArrayDeque) {
             Iterator<T> iterator = this.iterator();
