@@ -3,9 +3,11 @@
 <ol>
 <li>proj1 finish except ec, but failed to pass autogrape</li>
 <li>proj2 finish except ec, passed all the test in autogrape except merge-parent</li>
-</ol>
-##Link
+<li>proj3 create a simple world</li>
+</ol>  
+
+## Links
 <ol>
-<li>[Course home](https://sp21.datastructur.es/index.html)</li>
-<li>[autogrape] (https://www.gradescope.com/courses/137626)</li>
+<li>https://sp21.datastructur.es/index.html</li>
+<li>https://www.gradescope.com/courses/137626</li>
 </ol>
